@@ -34,12 +34,16 @@ export const REFERRAL_STATUSES = [
 ] as const;
 export type ReferralStatus = (typeof REFERRAL_STATUSES)[number];
 
+export const NOTE_COLORS = ['yellow', 'blue', 'green', 'pink', 'purple', 'cyan'] as const;
+export type NoteColor = (typeof NOTE_COLORS)[number];
+
 export interface Company {
   id: string;
   user_id: string;
   name: string;
   website: string | null;
   notes: string | null;
+  pinned: boolean;
   created_at: string;
 }
 
@@ -71,6 +75,7 @@ export interface Job {
   offer_currency: string | null;
   resume_id: string | null;
   notes: string | null;
+  pinned: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -107,4 +112,14 @@ export interface Referral {
   asked_at: string | null;
   notes: string | null;
   created_at: string;
+}
+
+export interface Note {
+  id: string;
+  user_id: string;
+  body: string;
+  color: NoteColor;
+  pinned: boolean;
+  created_at: string;
+  updated_at: string;
 }
