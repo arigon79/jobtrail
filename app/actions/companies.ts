@@ -32,3 +32,13 @@ export async function deleteCompany(formData: FormData) {
   if (error) throw new Error(error.message);
   revalidatePath('/companies');
 }
+
+export async function toggleCompanyPin(formData: FormData) {
+  const { supabase } = await uid();
+  const id = String(formData.get('id'));
+  const pinned = formData.get('pinned') === 'true';
+  const { error } = await supabase.from('companies').update({ pinned: !pinned }).eq('id', id);
+  if (error) throw new Error(error.message);
+  revalidatePath('/companies');
+  revalidatePath('/jobs');
+}
