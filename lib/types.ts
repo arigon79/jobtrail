@@ -37,6 +37,25 @@ export type ReferralStatus = (typeof REFERRAL_STATUSES)[number];
 export const NOTE_COLORS = ['yellow', 'blue', 'green', 'pink', 'purple', 'cyan'] as const;
 export type NoteColor = (typeof NOTE_COLORS)[number];
 
+export const KANBAN_COLUMNS = ['todo', 'doing', 'done'] as const;
+export type KanbanStatus = (typeof KANBAN_COLUMNS)[number];
+
+export const KANBAN_COLUMN_LABELS: Record<KanbanStatus, string> = {
+  todo: 'To do',
+  doing: 'Doing',
+  done: 'Done',
+};
+
+export const ATTACHMENT_KINDS = ['resume', 'cv', 'cover_letter', 'other'] as const;
+export type AttachmentKind = (typeof ATTACHMENT_KINDS)[number];
+
+export const ATTACHMENT_KIND_LABELS: Record<AttachmentKind, string> = {
+  resume: 'Resume',
+  cv: 'CV',
+  cover_letter: 'Cover letter',
+  other: 'Other',
+};
+
 export interface Company {
   id: string;
   user_id: string;
@@ -68,6 +87,7 @@ export interface Job {
   salary_range: string | null;
   status: JobStatus;
   priority: Priority;
+  posted_at: string | null;
   deadline: string | null;
   applied_at: string | null;
   follow_up_at: string | null;
@@ -114,11 +134,24 @@ export interface Referral {
   created_at: string;
 }
 
+export interface Attachment {
+  id: string;
+  user_id: string;
+  job_id: string;
+  kind: AttachmentKind;
+  label: string;
+  storage_path: string;
+  mime_type: string | null;
+  size_bytes: number | null;
+  uploaded_at: string;
+}
+
 export interface Note {
   id: string;
   user_id: string;
   body: string;
   color: NoteColor;
+  status: KanbanStatus;
   pinned: boolean;
   created_at: string;
   updated_at: string;

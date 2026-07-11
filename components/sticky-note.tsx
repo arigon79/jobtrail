@@ -1,8 +1,8 @@
 'use client';
 
 import { useRef, useState, useTransition } from 'react';
-import { NOTE_COLORS, type Note, type NoteColor } from '@/lib/types';
-import { updateNoteBody, setNoteColor, toggleNotePin, deleteNote } from '@/app/actions/notes';
+import { KANBAN_COLUMNS, NOTE_COLORS, type Note, type NoteColor } from '@/lib/types';
+import { updateNoteBody, setNoteColor, toggleNotePin, deleteNote, moveNote } from '@/app/actions/notes';
 
 // Deterministic tiny tilt per note so the board feels hand-pinned, not gridded.
 function tilt(id: string): number {
@@ -15,6 +15,10 @@ export function StickyNote({ note }: { note: Note }) {
   const [body, setBody] = useState(note.body);
   const [pending, startTransition] = useTransition();
   const lastSaved = useRef(note.body);
+
+  const idx = KANBAN_COLUMNS.indexOf(note.status);
+  const prev = idx > 0 ? KANBAN_COLUMNS[idx - 1] : null;
+  const next = idx < KANBAN_COLUMNS.length - 1 ? KANBAN_COLUMNS[idx + 1] : null;
 
   function save() {
     if (body === lastSaved.current) return;
@@ -80,7 +84,22 @@ export function StickyNote({ note }: { note: Note }) {
             />
           ))}
         </div>
-        <span className="note-saved" aria-hidden="true">{pending ? 'Saving…' : ''}</span>
+        <div className="note-move" role="group" aria-label="Move card">
+          <button
+            type="button"
+            disabled={!prev || pending}
+            onClick={() => prev && startTransition(() => moveNote(note.id, prev))}
+            aria-label="Move to previous column"
+            title="Move left"
+          >◀</button>
+          <button
+            type="button"
+            disabled={!next || pending}
+            onClick={() => next && startTransition(() => moveNote(note.id, next))}
+            aria-label="Move to next column"
+            title="Move right"
+          >▶</button>
+        </div>
       </div>
     </div>
   );

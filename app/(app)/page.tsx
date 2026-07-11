@@ -185,8 +185,8 @@ export default async function Dashboard() {
 
           <section className="side-card">
             <div className="side-head">
-              <h3>Notes</h3>
-              <Link href="/notes">Notes →</Link>
+              <h3>Kanban</h3>
+              <Link href="/notes">Board →</Link>
             </div>
             {notes.length === 0 ? (
               <p className="side-empty">No notes yet. Pin down a reminder.</p>

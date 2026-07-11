@@ -2,9 +2,18 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { StatusBadge, PriorityBadge } from '@/components/badges';
-import type { Company, Contact, Job, Resume } from '@/lib/types';
+import { updateReferralStatus, deleteReferral } from '@/app/actions/referrals';
+import {
+  REFERRAL_STATUSES,
+  type Company, type Contact, type Job, type Referral, type ReferralStatus, type Resume,
+} from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
+
+const REFERRAL_STATUS_LABEL: Record<ReferralStatus, string> = {
+  to_ask: 'To ask', asked: 'Asked', agreed: 'Agreed',
+  referred: 'Referred', declined: 'Declined', no_response: 'No response',
+};
 
 export default async function CompanyDetail({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -23,6 +32,19 @@ export default async function CompanyDetail({ params }: { params: Promise<{ id: 
   const jobs = (jobsData ?? []) as Job[];
   const contacts = (contactsData ?? []) as Contact[];
   const resume = (resumeData ?? null) as Resume | null;
+
+  // Referrals tied to this company's contacts.
+  const contactIds = contacts.map((c) => c.id);
+  const { data: refData } = contactIds.length
+    ? await supabase
+        .from('referrals')
+        .select('*')
+        .in('contact_id', contactIds)
+        .order('created_at', { ascending: false })
+    : { data: [] };
+  const referrals = (refData ?? []) as Referral[];
+  const contactName = new Map(contacts.map((c) => [c.id, c.name]));
+  const jobRole = new Map(jobs.map((j) => [j.id, j.role]));
 
   return (
     <div>
@@ -123,6 +145,54 @@ export default async function CompanyDetail({ params }: { params: Promise<{ id: 
                       ) : (
                         <span className="faint">—</span>
                       )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Referrals */}
+      <h2>Referrals at {company.name} ({referrals.length})</h2>
+      {referrals.length === 0 ? (
+        <div className="empty">
+          <div className="icon" aria-hidden="true">🤝</div>
+          <h3>No referral asks yet</h3>
+          <p>Track referral requests to contacts here.</p>
+          <Link className="btn" href="/referrals">Add a referral</Link>
+        </div>
+      ) : (
+        <div className="panel" style={{ padding: 0 }}>
+          <div className="table-wrap">
+            <table>
+              <thead>
+                <tr><th>Person</th><th>Job</th><th>Status</th><th></th></tr>
+              </thead>
+              <tbody>
+                {referrals.map((r) => (
+                  <tr key={r.id}>
+                    <td style={{ fontWeight: 600 }}>{contactName.get(r.contact_id) ?? 'Unknown'}</td>
+                    <td className="muted">{r.job_id ? (jobRole.get(r.job_id) ?? 'job') : '—'}</td>
+                    <td>
+                      <form action={updateReferralStatus} className="inline-actions">
+                        <input type="hidden" name="id" value={r.id} />
+                        <input type="hidden" name="company_id" value={company.id} />
+                        <select name="status" defaultValue={r.status} aria-label="Change referral status">
+                          {REFERRAL_STATUSES.map((x) => (
+                            <option key={x} value={x}>{REFERRAL_STATUS_LABEL[x]}</option>
+                          ))}
+                        </select>
+                        <button className="secondary sm" type="submit">Save</button>
+                      </form>
+                    </td>
+                    <td className="right">
+                      <form action={deleteReferral}>
+                        <input type="hidden" name="id" value={r.id} />
+                        <input type="hidden" name="company_id" value={company.id} />
+                        <button className="secondary sm danger" type="submit" aria-label="Delete referral">✕</button>
+                      </form>
                     </td>
                   </tr>
                 ))}

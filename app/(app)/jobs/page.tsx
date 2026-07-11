@@ -13,7 +13,7 @@ import {
 
 export const dynamic = 'force-dynamic';
 
-const SORT_COLS = ['role', 'company', 'status', 'priority', 'deadline', 'applied', 'created'] as const;
+const SORT_COLS = ['role', 'company', 'status', 'priority', 'posted', 'deadline', 'applied', 'created'] as const;
 type SortCol = (typeof SORT_COLS)[number];
 
 type Search = {
@@ -73,6 +73,7 @@ export default async function JobsPage({ searchParams }: { searchParams: Promise
       case 'company': return coOf(a).localeCompare(coOf(b));
       case 'status': return JOB_STATUSES.indexOf(a.status) - JOB_STATUSES.indexOf(b.status);
       case 'priority': return PRIORITIES.indexOf(a.priority) - PRIORITIES.indexOf(b.priority);
+      case 'posted': return (a.posted_at ?? '￿').localeCompare(b.posted_at ?? '￿');
       case 'deadline': return (a.deadline ?? '￿').localeCompare(b.deadline ?? '￿');
       case 'applied': return (a.applied_at ?? '￿').localeCompare(b.applied_at ?? '￿');
       case 'created': return a.created_at.localeCompare(b.created_at);
@@ -156,16 +157,24 @@ export default async function JobsPage({ searchParams }: { searchParams: Promise
               </div>
               <div className="grid-2">
                 <div>
+                  <label htmlFor="j-posted">Posted on</label>
+                  <input id="j-posted" name="posted_at" type="date" />
+                </div>
+                <div>
                   <label htmlFor="j-deadline">Deadline (apply by)</label>
                   <input id="j-deadline" name="deadline" type="date" />
                 </div>
+              </div>
+              <div className="grid-2">
                 <div>
                   <label htmlFor="j-followup">Follow-up on</label>
                   <input id="j-followup" name="follow_up_at" type="date" />
                 </div>
+                <div>
+                  <label htmlFor="j-applied">Applied on</label>
+                  <input id="j-applied" name="applied_at" type="date" />
+                </div>
               </div>
-              <label htmlFor="j-applied">Applied on</label>
-              <input id="j-applied" name="applied_at" type="date" />
               <label style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 14 }}>
                 <input name="remote" type="checkbox" style={{ width: 'auto' }} /> Remote
               </label>
@@ -241,6 +250,7 @@ export default async function JobsPage({ searchParams }: { searchParams: Promise
               <th>Location</th>
               <th className="center">Remote</th>
               <th>Salary</th>
+              <Th col="posted" label="Posted" />
               <Th col="deadline" label="Deadline" />
               <Th col="applied" label="Applied" />
               <th>Follow-up</th>
@@ -252,7 +262,7 @@ export default async function JobsPage({ searchParams }: { searchParams: Promise
           <tbody>
             {list.length === 0 ? (
               <tr>
-                <td colSpan={14}>
+                <td colSpan={15}>
                   <div className="sheet-empty">
                     <span className="sheet-empty-icon" aria-hidden="true">
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
@@ -288,6 +298,7 @@ export default async function JobsPage({ searchParams }: { searchParams: Promise
                   <td className="muted">{j.location ?? '—'}</td>
                   <td className="center">{j.remote ? '✓' : <span className="faint">—</span>}</td>
                   <td className="muted">{j.salary_range ?? '—'}</td>
+                  <td className="num muted">{j.posted_at ?? '—'}</td>
                   <td className="num muted">{j.deadline ?? '—'}</td>
                   <td className="num muted">{j.applied_at ?? '—'}</td>
                   <td className="num muted">{j.follow_up_at ?? '—'}</td>
