@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
-import { NOTE_COLORS, type NoteColor } from '@/lib/types';
+import { KANBAN_COLUMNS, NOTE_COLORS, type KanbanStatus, type NoteColor } from '@/lib/types';
 
 async function uid() {
   const supabase = await createClient();
@@ -11,9 +11,18 @@ async function uid() {
   return { supabase, userId: data.user.id };
 }
 
-export async function createNote() {
+export async function createNote(status: KanbanStatus = 'todo') {
+  if (!KANBAN_COLUMNS.includes(status)) throw new Error('Invalid column');
   const { supabase, userId } = await uid();
-  const { error } = await supabase.from('notes').insert({ user_id: userId, body: '' });
+  const { error } = await supabase.from('notes').insert({ user_id: userId, body: '', status });
+  if (error) throw new Error(error.message);
+  revalidatePath('/notes');
+}
+
+export async function moveNote(id: string, status: KanbanStatus) {
+  if (!KANBAN_COLUMNS.includes(status)) throw new Error('Invalid column');
+  const { supabase } = await uid();
+  const { error } = await supabase.from('notes').update({ status }).eq('id', id);
   if (error) throw new Error(error.message);
   revalidatePath('/notes');
 }

@@ -1,11 +1,11 @@
 import { createClient } from '@/lib/supabase/server';
 import { StickyNote } from '@/components/sticky-note';
-import { createNote } from '@/app/actions/notes';
-import type { Note } from '@/lib/types';
+import { AddCard } from '@/components/add-card';
+import { KANBAN_COLUMNS, KANBAN_COLUMN_LABELS, type Note } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
 
-export default async function NotesPage() {
+export default async function KanbanPage() {
   const supabase = await createClient();
   const { data } = await supabase
     .from('notes')
@@ -14,36 +14,40 @@ export default async function NotesPage() {
     .order('updated_at', { ascending: false });
   const notes = (data ?? []) as Note[];
 
+  const byStatus = (s: string) => notes.filter((n) => n.status === s);
+
   return (
-    <div>
+    <div className="page-wide">
       <div className="page-head">
         <div>
-          <h1>Notes</h1>
+          <h1>Kanban</h1>
           <p className="subtitle" style={{ margin: 0 }}>
-            {notes.length === 0 ? 'A corkboard for anything worth remembering.' : `${notes.length} ${notes.length === 1 ? 'note' : 'notes'}.`}
+            {notes.length === 0
+              ? 'Track anything worth remembering across three columns.'
+              : `${notes.length} ${notes.length === 1 ? 'card' : 'cards'} across the board.`}
           </p>
         </div>
-        <form action={createNote}>
-          <button type="submit">+ New note</button>
-        </form>
       </div>
 
-      {notes.length === 0 ? (
-        <div className="empty mt">
-          <div className="icon" aria-hidden="true">📌</div>
-          <h3>No notes yet</h3>
-          <p>Pin down reminders, interview prep, or anything else.</p>
-          <form action={createNote}>
-            <button type="submit">Add your first note</button>
-          </form>
-        </div>
-      ) : (
-        <div className="board mt">
-          {notes.map((n) => (
-            <StickyNote key={n.id} note={n} />
-          ))}
-        </div>
-      )}
+      <div className="kanban mt">
+        {KANBAN_COLUMNS.map((col) => {
+          const cards = byStatus(col);
+          return (
+            <section key={col} className="kanban-col" aria-label={KANBAN_COLUMN_LABELS[col]}>
+              <div className="kanban-col-head">
+                <span>{KANBAN_COLUMN_LABELS[col]}</span>
+                <span className="count">{cards.length}</span>
+              </div>
+              <div className="kanban-cards">
+                {cards.map((n) => (
+                  <StickyNote key={n.id} note={n} />
+                ))}
+              </div>
+              <AddCard status={col} />
+            </section>
+          );
+        })}
+      </div>
     </div>
   );
 }

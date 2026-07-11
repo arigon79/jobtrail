@@ -4,12 +4,21 @@ import { createClient } from '@/lib/supabase/server';
 import { addInterview, deleteInterview } from '@/app/actions/interviews';
 import { updateJob } from '@/app/actions/jobs';
 import { addJobReferral, deleteReferral } from '@/app/actions/referrals';
+import { uploadJobAttachment, deleteJobAttachment } from '@/app/actions/attachments';
 import { StatusBadge, PriorityBadge, OutcomeBadge, ReferralBadge } from '@/components/badges';
 import { JobProgress } from '@/components/job-progress';
 import {
+  ATTACHMENT_KINDS, ATTACHMENT_KIND_LABELS,
   INTERVIEW_KINDS, INTERVIEW_OUTCOMES, JOB_STATUSES, JOB_STATUS_LABELS, PRIORITIES, REFERRAL_STATUSES,
-  type Company, type Contact, type Interview, type Job, type Referral,
+  type Attachment, type Company, type Contact, type Interview, type Job, type Referral,
 } from '@/lib/types';
+
+function fmtSize(bytes: number | null): string {
+  if (!bytes) return '';
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
 
 export const dynamic = 'force-dynamic';
 
@@ -21,7 +30,7 @@ export default async function JobDetail({ params }: { params: Promise<{ id: stri
   if (!job) notFound();
   const j = job as Job;
 
-  const [{ data: company }, { data: interviews }, { data: companiesData }, { data: contactsData }, { data: referralsData }] = await Promise.all([
+  const [{ data: company }, { data: interviews }, { data: companiesData }, { data: contactsData }, { data: referralsData }, { data: attachmentsData }] = await Promise.all([
     j.company_id
       ? supabase.from('companies').select('*').eq('id', j.company_id).single()
       : Promise.resolve({ data: null }),
@@ -31,6 +40,7 @@ export default async function JobDetail({ params }: { params: Promise<{ id: stri
       ? supabase.from('contacts').select('id, name, role').eq('company_id', j.company_id).order('name')
       : Promise.resolve({ data: [] }),
     supabase.from('referrals').select('id, contact_id, status, asked_at').eq('job_id', id),
+    supabase.from('attachments').select('*').eq('job_id', id).order('uploaded_at', { ascending: false }),
   ]);
 
   const co = company as Company | null;
@@ -38,6 +48,7 @@ export default async function JobDetail({ params }: { params: Promise<{ id: stri
   const cos = (companiesData ?? []) as Pick<Company, 'id' | 'name'>[];
   const people = (contactsData ?? []) as Pick<Contact, 'id' | 'name' | 'role'>[];
   const jobReferrals = (referralsData ?? []) as Pick<Referral, 'id' | 'contact_id' | 'status' | 'asked_at'>[];
+  const attachments = (attachmentsData ?? []) as Attachment[];
   const personName = new Map(people.map((p) => [p.id, p.name]));
 
   return (
@@ -102,26 +113,29 @@ export default async function JobDetail({ params }: { params: Promise<{ id: stri
 
           <div className="grid-2">
             <div>
-              <label htmlFor="e-deadline">Deadline (apply by)</label>
-              <input id="e-deadline" name="deadline" type="date" defaultValue={j.deadline ?? ''} />
+              <label htmlFor="e-posted">Posted on</label>
+              <input id="e-posted" name="posted_at" type="date" defaultValue={j.posted_at ?? ''} />
             </div>
             <div>
-              <label htmlFor="e-applied">Applied on</label>
-              <input id="e-applied" name="applied_at" type="date" defaultValue={j.applied_at ?? ''} />
+              <label htmlFor="e-deadline">Deadline (apply by)</label>
+              <input id="e-deadline" name="deadline" type="date" defaultValue={j.deadline ?? ''} />
             </div>
           </div>
 
           <div className="grid-2">
             <div>
+              <label htmlFor="e-applied">Applied on</label>
+              <input id="e-applied" name="applied_at" type="date" defaultValue={j.applied_at ?? ''} />
+            </div>
+            <div>
               <label htmlFor="e-followup">Follow-up on</label>
               <input id="e-followup" name="follow_up_at" type="date" defaultValue={j.follow_up_at ?? ''} />
             </div>
-            <div>
-              <label htmlFor="e-offer">Offer amount</label>
-              <input id="e-offer" name="offer_amount" type="number" step="any" defaultValue={j.offer_amount ?? ''} placeholder="150000" />
-              <input type="hidden" name="offer_currency" value={j.offer_currency ?? 'USD'} />
-            </div>
           </div>
+
+          <label htmlFor="e-offer">Offer amount</label>
+          <input id="e-offer" name="offer_amount" type="number" step="any" defaultValue={j.offer_amount ?? ''} placeholder="150000" />
+          <input type="hidden" name="offer_currency" value={j.offer_currency ?? 'USD'} />
 
           <label style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 14 }}>
             <input name="remote" type="checkbox" defaultChecked={j.remote} style={{ width: 'auto' }} /> Remote
@@ -131,6 +145,65 @@ export default async function JobDetail({ params }: { params: Promise<{ id: stri
           <textarea id="e-notes" name="notes" defaultValue={j.notes ?? ''} placeholder="Anything worth remembering" />
 
           <button className="mt" type="submit">Save changes</button>
+        </form>
+      </div>
+
+      <h2>Attachments</h2>
+      <div className="panel">
+        {attachments.length > 0 ? (
+          <div className="table-wrap">
+            <table>
+              <thead>
+                <tr><th>Document</th><th>Type</th><th>Uploaded</th><th></th></tr>
+              </thead>
+              <tbody>
+                {attachments.map((a) => (
+                  <tr key={a.id}>
+                    <td style={{ fontWeight: 600 }}>
+                      {a.label}
+                      {a.size_bytes ? <span className="faint" style={{ fontWeight: 400, marginLeft: 8, fontSize: 12 }}>{fmtSize(a.size_bytes)}</span> : null}
+                    </td>
+                    <td className="muted">{ATTACHMENT_KIND_LABELS[a.kind]}</td>
+                    <td className="muted">{new Date(a.uploaded_at).toLocaleDateString()}</td>
+                    <td className="right">
+                      <div className="inline-actions">
+                        {a.mime_type === 'application/pdf' && (
+                          <a className="btn secondary sm" href={`/attachments/${a.id}/download`} target="_blank" rel="noreferrer">View</a>
+                        )}
+                        <a className="btn secondary sm" href={`/attachments/${a.id}/download?download=1`}>Download</a>
+                        <form action={deleteJobAttachment}>
+                          <input type="hidden" name="id" value={a.id} />
+                          <input type="hidden" name="job_id" value={j.id} />
+                          <button className="secondary sm danger" type="submit" aria-label={`Delete ${a.label}`}>Delete</button>
+                        </form>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <p className="muted" style={{ margin: 0 }}>No files yet. Attach a resume, CV, cover letter, or other document.</p>
+        )}
+
+        <form action={uploadJobAttachment} className="mt">
+          <input type="hidden" name="job_id" value={j.id} />
+          <div className="grid-2">
+            <div>
+              <label htmlFor="at-label">Label</label>
+              <input id="at-label" name="label" placeholder="Defaults to the file name" />
+            </div>
+            <div>
+              <label htmlFor="at-kind">Type</label>
+              <select id="at-kind" name="kind" defaultValue="resume">
+                {ATTACHMENT_KINDS.map((k) => <option key={k} value={k}>{ATTACHMENT_KIND_LABELS[k]}</option>)}
+              </select>
+            </div>
+          </div>
+          <label htmlFor="at-file">File * — PDF or Word (.doc/.docx), max 10 MB</label>
+          <input id="at-file" name="file" type="file" required accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" />
+          <button className="mt" type="submit">Upload attachment</button>
         </form>
       </div>
 

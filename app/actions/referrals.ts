@@ -97,6 +97,8 @@ export async function updateReferralStatus(formData: FormData) {
 
   const { error } = await supabase.from('referrals').update({ status }).eq('id', id);
   if (error) throw new Error(error.message);
+  const companyId = String(formData.get('company_id') ?? '').trim();
+  if (companyId) revalidatePath(`/companies/${companyId}`);
   revalidatePath('/referrals');
   revalidatePath('/');
 }
@@ -108,6 +110,8 @@ export async function deleteReferral(formData: FormData) {
   if (error) throw new Error(error.message);
   const jobId = String(formData.get('job_id') ?? '').trim();
   if (jobId) revalidatePath(`/jobs/${jobId}`);
+  const companyId = String(formData.get('company_id') ?? '').trim();
+  if (companyId) revalidatePath(`/companies/${companyId}`);
   revalidatePath('/referrals');
   revalidatePath('/jobs');
   revalidatePath('/');
