@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
-import { updateProfile, changePassword } from '@/app/actions/profile';
+import { updateProfile, changePassword, upsertProfile } from '@/app/actions/profile';
+import type { Profile } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
 
@@ -7,6 +8,13 @@ export default async function ProfilePage() {
   const supabase = await createClient();
   const { data } = await supabase.auth.getUser();
   const user = data.user;
+
+  const { data: profileRow } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', user?.id ?? '')
+    .maybeSingle();
+  const profile = profileRow as Profile | null;
 
   const fullName = ((user?.user_metadata?.full_name as string | undefined) ?? '').trim();
   const initial = (fullName[0] ?? user?.email?.[0] ?? 'U').toUpperCase();
@@ -42,6 +50,64 @@ export default async function ProfilePage() {
           <p className="sheet-hint">Email is tied to your login and can’t be changed here.</p>
 
           <button className="mt" type="submit">Save name</button>
+        </form>
+      </div>
+
+      <h2>Public profile</h2>
+      <div className="panel" style={{ maxWidth: 480 }}>
+        <p className="sheet-hint" style={{ marginTop: 0 }}>
+          Friends find you by <strong>@handle</strong>. This is the only info friends can see —
+          your job tracker stays private.
+        </p>
+        <form action={upsertProfile}>
+          <label htmlFor="handle">Handle</label>
+          <input
+            id="handle"
+            name="handle"
+            defaultValue={profile?.handle ?? ''}
+            placeholder="jane_doe"
+            pattern="@?[A-Za-z0-9_]{3,30}"
+            required
+          />
+
+          <label htmlFor="display_name">Display name</label>
+          <input
+            id="display_name"
+            name="display_name"
+            defaultValue={profile?.display_name ?? fullName}
+            placeholder="Jane Doe"
+            maxLength={80}
+            required
+          />
+
+          <label htmlFor="headline">Headline</label>
+          <input
+            id="headline"
+            name="headline"
+            defaultValue={profile?.headline ?? ''}
+            placeholder="New grad SWE, open to work"
+            maxLength={120}
+          />
+
+          <label htmlFor="current_company">Current company</label>
+          <input
+            id="current_company"
+            name="current_company"
+            defaultValue={profile?.current_company ?? ''}
+            placeholder="Where you work now (powers referral hints)"
+            maxLength={80}
+          />
+
+          <label className="check-row">
+            <input type="checkbox" name="open_to_work" defaultChecked={profile?.open_to_work ?? false} />
+            <span>Show I’m open to work</span>
+          </label>
+          <label className="check-row">
+            <input type="checkbox" name="share_default" defaultChecked={profile?.share_default ?? false} />
+            <span>Pre-check “share to feed” on new updates</span>
+          </label>
+
+          <button className="mt" type="submit">Save public profile</button>
         </form>
       </div>
 

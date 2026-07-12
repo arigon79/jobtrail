@@ -5,6 +5,7 @@ import { addInterview, deleteInterview } from '@/app/actions/interviews';
 import { updateJob } from '@/app/actions/jobs';
 import { addJobReferral, deleteReferral } from '@/app/actions/referrals';
 import { uploadJobAttachment, deleteJobAttachment } from '@/app/actions/attachments';
+import { shareEvent } from '@/app/actions/social';
 import { StatusBadge, PriorityBadge, OutcomeBadge, ReferralBadge } from '@/components/badges';
 import { JobProgress } from '@/components/job-progress';
 import {
@@ -18,6 +19,15 @@ function fmtSize(bytes: number | null): string {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+// Map a tracker status to the feed verb it makes sense to share as.
+function statusToVerb(status: string): 'applied' | 'interview' | 'offer' | 'accepted' | 'rejected' {
+  if (status === 'interview' || status === 'final' || status === 'phone_screen' || status === 'oa') return 'interview';
+  if (status === 'offer') return 'offer';
+  if (status === 'accepted') return 'accepted';
+  if (status === 'rejected' || status === 'withdrawn' || status === 'ghosted') return 'rejected';
+  return 'applied';
 }
 
 export const dynamic = 'force-dynamic';
@@ -44,6 +54,21 @@ export default async function JobDetail({ params }: { params: Promise<{ id: stri
   ]);
 
   const co = company as Company | null;
+
+  // Referral hint: friends whose current company matches this job's company.
+  // profiles RLS already restricts this to people I'm linked with.
+  const { data: auth } = await supabase.auth.getUser();
+  const me = auth.user?.id;
+  let friendsHere: { display_name: string; handle: string }[] = [];
+  if (co?.name) {
+    const { data: fh } = await supabase
+      .from('profiles')
+      .select('display_name, handle')
+      .ilike('current_company', co.name)
+      .neq('id', me ?? '');
+    friendsHere = (fh as { display_name: string; handle: string }[] | null) ?? [];
+  }
+
   const rounds = (interviews ?? []) as Interview[];
   const cos = (companiesData ?? []) as Pick<Company, 'id' | 'name'>[];
   const people = (contactsData ?? []) as Pick<Contact, 'id' | 'name' | 'role'>[];
@@ -62,6 +87,32 @@ export default async function JobDetail({ params }: { params: Promise<{ id: stri
       </p>
 
       <JobProgress status={j.status} />
+
+      {friendsHere.length > 0 && (
+        <div className="panel mt" style={{ borderColor: 'var(--green)' }}>
+          <strong>💡 Referral hint:</strong>{' '}
+          {friendsHere.map((f, i) => (
+            <span key={f.handle}>
+              {i > 0 ? ', ' : ''}{f.display_name} <span className="muted">@{f.handle}</span>
+            </span>
+          ))}{' '}
+          {friendsHere.length === 1 ? 'works' : 'work'} at {co?.name}. Ask for a referral?
+        </div>
+      )}
+
+      <div className="panel mt">
+        <form action={shareEvent} className="row" style={{ alignItems: 'end' }}>
+          <input type="hidden" name="verb" value={statusToVerb(j.status)} />
+          <input type="hidden" name="company_name" value={co?.name ?? ''} />
+          <input type="hidden" name="role" value={j.role} />
+          <input type="hidden" name="job_id" value={j.id} />
+          <div style={{ flex: 1 }}>
+            <label htmlFor="share-note">Share this to your feed</label>
+            <input id="share-note" name="body" placeholder="Optional note for friends…" />
+          </div>
+          <button type="submit">Share update</button>
+        </form>
+      </div>
 
       <datalist id="company-names">
         {cos.map((c) => <option key={c.id} value={c.name} />)}

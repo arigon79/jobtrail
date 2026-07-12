@@ -156,3 +156,73 @@ export interface Note {
   created_at: string;
   updated_at: string;
 }
+
+// --- Social layer (v2). Keep in sync with supabase/migrations/0005_social.sql. ---
+
+export const FEED_VERBS = [
+  'applied', 'interview', 'offer', 'accepted', 'rejected', 'open_to_work', 'custom',
+] as const;
+export type FeedVerb = (typeof FEED_VERBS)[number];
+
+export const FEED_VERB_LABELS: Record<FeedVerb, string> = {
+  applied: 'applied to',
+  interview: 'landed an interview at',
+  offer: 'got an offer from',
+  accepted: 'accepted an offer from',
+  rejected: 'was rejected by',
+  open_to_work: 'is open to work',
+  custom: '',
+};
+
+export const FRIENDSHIP_STATUSES = ['pending', 'accepted', 'blocked'] as const;
+export type FriendshipStatus = (typeof FRIENDSHIP_STATUSES)[number];
+
+export interface Profile {
+  id: string;
+  handle: string;
+  display_name: string;
+  headline: string | null;
+  avatar_url: string | null;
+  current_company: string | null;
+  open_to_work: boolean;
+  share_default: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Friendship {
+  id: string;
+  requester_id: string;
+  addressee_id: string;
+  status: FriendshipStatus;
+  created_at: string;
+  responded_at: string | null;
+}
+
+export interface FeedEvent {
+  id: string;
+  actor_id: string;
+  verb: FeedVerb;
+  company_name: string | null;
+  role: string | null;
+  body: string | null;
+  job_id: string | null;
+  visibility: 'friends';
+  created_at: string;
+}
+
+export interface Reaction {
+  id: string;
+  user_id: string;
+  event_id: string;
+  emoji: string;
+  created_at: string;
+}
+
+export interface Comment {
+  id: string;
+  user_id: string;
+  event_id: string;
+  body: string;
+  created_at: string;
+}
