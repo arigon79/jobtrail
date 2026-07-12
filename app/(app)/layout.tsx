@@ -14,12 +14,14 @@ const ico = (paths: React.ReactNode) => (
 );
 
 const NAV = [
+  { href: '/feed', label: 'Feed', icon: ico(<><path d="M4 11a9 9 0 0 1 9 9M4 4a16 16 0 0 1 16 16" /><circle cx="5" cy="19" r="1" /></>) },
   { href: '/', label: 'Dashboard', icon: ico(<><rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" /><rect x="14" y="14" width="7" height="7" rx="1" /><rect x="3" y="14" width="7" height="7" rx="1" /></>) },
   { href: '/jobs', label: 'Tracker', icon: ico(<><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M3 9h18M3 15h18M9 3v18" /></>) },
   { href: '/applications', label: 'Jobs', icon: ico(<><rect x="2" y="7" width="20" height="14" rx="2" /><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M2 13h20" /></>) },
   { href: '/companies', label: 'Companies', icon: ico(<><path d="M4 21V5a1 1 0 0 1 1-1h9a1 1 0 0 1 1 1v16M15 9h4a1 1 0 0 1 1 1v11M3 21h18" /><path d="M8 8h.01M8 12h.01M8 16h.01M11 8h.01M11 12h.01M11 16h.01" /></>) },
   { href: '/calendar', label: 'Calendar', icon: ico(<><rect x="3" y="4" width="18" height="18" rx="2" /><path d="M8 2v4M16 2v4M3 10h18" /></>) },
   { href: '/notes', label: 'Kanban', icon: ico(<><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M9 3v18M15 3v18" /></>) },
+  { href: '/friends', label: 'Friends', icon: ico(<><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" /></>) },
 ];
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
