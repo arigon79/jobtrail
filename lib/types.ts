@@ -46,6 +46,16 @@ export const KANBAN_COLUMN_LABELS: Record<KanbanStatus, string> = {
   done: 'Done',
 };
 
+export const JOB_COLUMN_TYPES = ['text', 'number', 'date', 'select'] as const;
+export type JobColumnType = (typeof JOB_COLUMN_TYPES)[number];
+
+export const JOB_COLUMN_TYPE_LABELS: Record<JobColumnType, string> = {
+  text: 'Text',
+  number: 'Number',
+  date: 'Date',
+  select: 'Dropdown',
+};
+
 export const ATTACHMENT_KINDS = ['resume', 'cv', 'cover_letter', 'other'] as const;
 export type AttachmentKind = (typeof ATTACHMENT_KINDS)[number];
 
@@ -96,8 +106,21 @@ export interface Job {
   resume_id: string | null;
   notes: string | null;
   pinned: boolean;
+  // User-defined columns: keyed by JobColumn.id → cell value (stored as text).
+  custom: Record<string, string>;
   created_at: string;
   updated_at: string;
+}
+
+// A user-defined Tracker column. `options` only used when type === 'select'.
+export interface JobColumn {
+  id: string;
+  user_id: string;
+  label: string;
+  type: JobColumnType;
+  options: string[];
+  position: number;
+  created_at: string;
 }
 
 export interface Interview {

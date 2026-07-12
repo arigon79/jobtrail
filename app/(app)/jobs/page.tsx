@@ -5,10 +5,14 @@ import {
 } from '@/app/actions/jobs';
 import { PinButton } from '@/components/pin-button';
 import { AutoSubmitSelect } from '@/components/auto-submit-select';
+import { ColumnCustomizer } from '@/components/column-customizer';
+import { AddColumn } from '@/components/add-column';
+import { CustomCell } from '@/components/custom-cell';
+import { deleteJobColumn } from '@/app/actions/job-columns';
 import { ReferralBadge } from '@/components/badges';
 import {
   JOB_STATUSES, JOB_STATUS_LABELS, PRIORITIES, REFERRAL_STATUSES,
-  type Company, type Job, type ReferralStatus,
+  type Company, type Job, type JobColumn, type ReferralStatus,
 } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
@@ -30,12 +34,14 @@ export default async function JobsPage({ searchParams }: { searchParams: Promise
   if (sp.company) query = query.eq('company_id', sp.company);
   if (sp.priority) query = query.eq('priority', sp.priority);
 
-  const [{ data: jobs }, { data: companies }, { data: referrals }] = await Promise.all([
+  const [{ data: jobs }, { data: companies }, { data: referrals }, { data: jobColumns }] = await Promise.all([
     query,
     supabase.from('companies').select('*').order('name'),
     supabase.from('referrals').select('job_id, status'),
+    supabase.from('job_columns').select('*').order('position').order('created_at'),
   ]);
 
+  const columns = (jobColumns ?? []) as JobColumn[];
   const cos = (companies ?? []) as Company[];
   const coName = new Map(cos.map((c) => [c.id, c.name]));
 
@@ -88,7 +94,8 @@ export default async function JobsPage({ searchParams }: { searchParams: Promise
   const filtered = Boolean(q || sp.status || sp.company || sp.priority);
 
   // Build a sortable header cell that preserves the active search/filters.
-  function Th({ col, label, className }: { col: SortCol; label: string; className?: string }) {
+  // `dataCol` tags the column for the client-side show/hide customizer.
+  function Th({ col, label, className, dataCol }: { col: SortCol; label: string; className?: string; dataCol?: string }) {
     const active = sortCol === col;
     const nextDir = active && dir === 'asc' ? 'desc' : 'asc';
     const params = new URLSearchParams();
@@ -99,7 +106,7 @@ export default async function JobsPage({ searchParams }: { searchParams: Promise
     params.set('sort', col);
     params.set('dir', nextDir);
     return (
-      <th className={`${className ?? ''}${active ? ' sorted' : ''}`.trim() || undefined}>
+      <th className={`${className ?? ''}${active ? ' sorted' : ''}`.trim() || undefined} data-col={dataCol}>
         <Link href={`/jobs?${params.toString()}`}>
           {label}
           {active && <span className="sort-arrow" aria-hidden="true">{dir === 'asc' ? '↑' : '↓'}</span>}
@@ -237,24 +244,40 @@ export default async function JobsPage({ searchParams }: { searchParams: Promise
         {cos.map((c) => <option key={c.id} value={c.name} />)}
       </datalist>
 
-      <div className="sheet-wrap mt">
+      <div className="sheet-toolbar mt">
+        <AddColumn />
+        <ColumnCustomizer />
+      </div>
+
+      <div className="sheet-wrap">
         <table className="sheet">
           <thead>
             <tr>
               <th aria-label="Pin" />
               <th className="rownum">#</th>
               <Th col="role" label="Role" />
-              <Th col="company" label="Company" />
-              <Th col="status" label="Status" />
-              <Th col="priority" label="Priority" />
-              <th>Location</th>
-              <th className="center">Remote</th>
-              <th>Salary</th>
-              <Th col="posted" label="Posted" />
-              <Th col="deadline" label="Deadline" />
-              <Th col="applied" label="Applied" />
-              <th>Follow-up</th>
-              <th>Referral</th>
+              <Th col="company" label="Company" dataCol="company" />
+              <Th col="status" label="Status" dataCol="status" />
+              <Th col="priority" label="Priority" dataCol="priority" />
+              <th data-col="location">Location</th>
+              <th className="center" data-col="remote">Remote</th>
+              <th data-col="salary">Salary</th>
+              <Th col="posted" label="Posted" dataCol="posted" />
+              <Th col="deadline" label="Deadline" dataCol="deadline" />
+              <Th col="applied" label="Applied" dataCol="applied" />
+              <th data-col="followup">Follow-up</th>
+              <th data-col="referral">Referral</th>
+              {columns.map((c) => (
+                <th key={c.id} className="custom-col">
+                  <span className="custom-col-head">
+                    <span>{c.label}</span>
+                    <form action={deleteJobColumn}>
+                      <input type="hidden" name="id" value={c.id} />
+                      <button type="submit" className="custom-col-del" aria-label={`Delete column ${c.label}`} title="Delete column">✕</button>
+                    </form>
+                  </span>
+                </th>
+              ))}
               <th aria-label="Delete" />
             </tr>
           </thead>
@@ -262,7 +285,7 @@ export default async function JobsPage({ searchParams }: { searchParams: Promise
           <tbody>
             {list.length === 0 ? (
               <tr>
-                <td colSpan={15}>
+                <td colSpan={15 + columns.length}>
                   <div className="sheet-empty">
                     <span className="sheet-empty-icon" aria-hidden="true">
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
@@ -284,29 +307,34 @@ export default async function JobsPage({ searchParams }: { searchParams: Promise
                   </td>
                   <td className="rownum">{i + 1}</td>
                   <td className="cell-role"><Link href={`/jobs/${j.id}`}>{j.role}</Link></td>
-                  <td className="muted">{coOf(j) || '—'}</td>
-                  <td className="cell-select">
+                  <td className="muted" data-col="company">{coOf(j) || '—'}</td>
+                  <td className="cell-select" data-col="status">
                     <AutoSubmitSelect action={updateJobStatus} id={j.id} name="status" defaultValue={j.status} ariaLabel={`Status for ${j.role}`}>
                       {JOB_STATUSES.map((s) => <option key={s} value={s}>{JOB_STATUS_LABELS[s]}</option>)}
                     </AutoSubmitSelect>
                   </td>
-                  <td className="cell-select">
+                  <td className="cell-select" data-col="priority">
                     <AutoSubmitSelect action={updateJobPriority} id={j.id} name="priority" defaultValue={j.priority} ariaLabel={`Priority for ${j.role}`}>
                       {PRIORITIES.map((p) => <option key={p} value={p}>{p}</option>)}
                     </AutoSubmitSelect>
                   </td>
-                  <td className="muted">{j.location ?? '—'}</td>
-                  <td className="center">{j.remote ? '✓' : <span className="faint">—</span>}</td>
-                  <td className="muted">{j.salary_range ?? '—'}</td>
-                  <td className="num muted">{j.posted_at ?? '—'}</td>
-                  <td className="num muted">{j.deadline ?? '—'}</td>
-                  <td className="num muted">{j.applied_at ?? '—'}</td>
-                  <td className="num muted">{j.follow_up_at ?? '—'}</td>
-                  <td>
+                  <td className="muted" data-col="location">{j.location ?? '—'}</td>
+                  <td className="center" data-col="remote">{j.remote ? '✓' : <span className="faint">—</span>}</td>
+                  <td className="muted" data-col="salary">{j.salary_range ?? '—'}</td>
+                  <td className="num muted" data-col="posted">{j.posted_at ?? '—'}</td>
+                  <td className="num muted" data-col="deadline">{j.deadline ?? '—'}</td>
+                  <td className="num muted" data-col="applied">{j.applied_at ?? '—'}</td>
+                  <td className="num muted" data-col="followup">{j.follow_up_at ?? '—'}</td>
+                  <td data-col="referral">
                     {refByJob.has(j.id)
                       ? <ReferralBadge status={refByJob.get(j.id)!} />
                       : <span className="faint">—</span>}
                   </td>
+                  {columns.map((c) => (
+                    <td key={c.id} className="cell-custom">
+                      <CustomCell jobId={j.id} column={c} value={j.custom?.[c.id] ?? ''} />
+                    </td>
+                  ))}
                   <td className="row-del">
                     <form action={deleteJob}>
                       <input type="hidden" name="id" value={j.id} />

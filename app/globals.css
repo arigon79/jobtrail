@@ -942,6 +942,99 @@ button:disabled { opacity: 0.55; cursor: not-allowed; }
   .add-job-form { position: fixed; left: 12px; right: 12px; width: auto; top: auto; }
 }
 
+/* ---------- tracker column customizer ---------- */
+.sheet-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+/* + Add column dropdown (mirrors .add-job) */
+.add-column { position: relative; flex: none; }
+.add-column > summary {
+  list-style: none;
+  cursor: pointer;
+  user-select: none;
+}
+.add-column > summary::-webkit-details-marker { display: none; }
+.add-column > summary::marker { content: ""; }
+.add-column-form {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: min(360px, 88vw);
+  max-height: 74vh;
+  overflow: auto;
+  z-index: 30;
+  padding: 14px;
+  box-shadow: var(--shadow-lg);
+}
+@media (max-width: 640px) {
+  .add-column-form { position: fixed; left: 12px; right: 12px; width: auto; top: auto; }
+}
+
+/* user-defined column header: label + delete affordance */
+.custom-col-head {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.custom-col-head form { margin: 0; display: inline-flex; }
+.custom-col-del {
+  padding: 0 4px;
+  line-height: 1;
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 12px;
+}
+.custom-col-del:hover { color: var(--red, #e5484d); }
+.cell-custom form { margin: 0; }
+.cell-custom input,
+.cell-custom select { width: 100%; }
+.col-customizer { position: relative; }
+.col-customizer > summary {
+  list-style: none;
+  cursor: pointer;
+  user-select: none;
+}
+.col-customizer > summary::-webkit-details-marker { display: none; }
+.col-customizer > summary::marker { content: ""; }
+.col-customizer-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: min(240px, 88vw);
+  max-height: 74vh;
+  overflow: auto;
+  z-index: 30;
+  box-shadow: var(--shadow-lg);
+  padding: 12px;
+}
+.col-customizer-head {
+  margin: 0 0 8px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+.col-customizer-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 0;
+  cursor: pointer;
+  font-size: 14px;
+}
+.col-customizer-row input { width: auto; margin: 0; }
+.col-customizer-reset { margin-top: 10px; width: 100%; }
+@media (max-width: 640px) {
+  .col-customizer-menu { position: fixed; left: 12px; right: 12px; width: auto; top: auto; }
+}
+
 /* ---------- toast (success sign) ---------- */
 .toast {
   position: fixed;
