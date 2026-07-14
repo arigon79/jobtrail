@@ -84,10 +84,10 @@ export default async function CompanyDetail({ params }: { params: Promise<{ id: 
               <tbody>
                 {jobs.map((j) => (
                   <tr key={j.id}>
-                    <td style={{ fontWeight: 600 }}><Link href={`/jobs/${j.id}`}>{j.role}</Link></td>
-                    <td><PriorityBadge priority={j.priority} /></td>
-                    <td><StatusBadge status={j.status} /></td>
-                    <td className="muted">{j.deadline ?? '—'}</td>
+                    <td data-label="Role" style={{ fontWeight: 600 }}><Link href={`/jobs/${j.id}`}>{j.role}</Link></td>
+                    <td data-label="Priority"><PriorityBadge priority={j.priority} /></td>
+                    <td data-label="Status"><StatusBadge status={j.status} /></td>
+                    <td data-label="Deadline" className="muted">{j.deadline ?? '—'}</td>
                   </tr>
                 ))}
               </tbody>
@@ -115,9 +115,9 @@ export default async function CompanyDetail({ params }: { params: Promise<{ id: 
               <tbody>
                 {contacts.map((c) => (
                   <tr key={c.id}>
-                    <td style={{ fontWeight: 600 }}>{c.name}</td>
-                    <td className="muted">{c.role ?? '—'}</td>
-                    <td>
+                    <td data-label="Name" style={{ fontWeight: 600 }}>{c.name}</td>
+                    <td data-label="Role" className="muted">{c.role ?? '—'}</td>
+                    <td data-label="LinkedIn">
                       {c.linkedin_url ? (
                         <a href={c.linkedin_url} target="_blank" rel="noreferrer">Profile ↗</a>
                       ) : (

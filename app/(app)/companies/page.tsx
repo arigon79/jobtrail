@@ -31,10 +31,10 @@ export default async function CompaniesPage() {
               <tbody>
                 {companies.map((c) => (
                   <tr key={c.id}>
-                    <td style={{ fontWeight: 600 }}><Link href={`/companies/${c.id}`}>{c.name}</Link></td>
-                    <td>{c.website ? <a href={c.website} target="_blank" rel="noreferrer">Site ↗</a> : <span className="faint">—</span>}</td>
-                    <td className="muted">{c.notes ?? '—'}</td>
-                    <td className="right">
+                    <td data-label="Name" style={{ fontWeight: 600 }}><Link href={`/companies/${c.id}`}>{c.name}</Link></td>
+                    <td data-label="Website">{c.website ? <a href={c.website} target="_blank" rel="noreferrer">Site ↗</a> : <span className="faint">—</span>}</td>
+                    <td data-label="Notes" className="muted">{c.notes ?? '—'}</td>
+                    <td data-label="Actions" className="right">
                       <form action={deleteCompany}>
                         <input type="hidden" name="id" value={c.id} />
                         <button className="secondary sm danger" type="submit" aria-label={`Delete ${c.name}`}>

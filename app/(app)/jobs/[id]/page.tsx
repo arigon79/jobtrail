@@ -64,11 +64,11 @@ export default async function JobDetail({ params }: { params: Promise<{ id: stri
           <tbody>
             {rounds.map((r) => (
               <tr key={r.id}>
-                <td>{r.round ?? '—'}</td>
-                <td className="muted">{r.kind ?? '—'}</td>
-                <td className="muted">{r.scheduled_at ? new Date(r.scheduled_at).toLocaleString() : '—'}</td>
-                <td><OutcomeBadge outcome={r.outcome} /></td>
-                <td className="right">
+                <td data-label="Round">{r.round ?? '—'}</td>
+                <td data-label="Kind" className="muted">{r.kind ?? '—'}</td>
+                <td data-label="When" className="muted">{r.scheduled_at ? new Date(r.scheduled_at).toLocaleString() : '—'}</td>
+                <td data-label="Outcome"><OutcomeBadge outcome={r.outcome} /></td>
+                <td data-label="Actions" className="right">
                   <form action={deleteInterview}>
                     <input type="hidden" name="id" value={r.id} />
                     <input type="hidden" name="job_id" value={j.id} />
@@ -79,7 +79,7 @@ export default async function JobDetail({ params }: { params: Promise<{ id: stri
                 </td>
               </tr>
             ))}
-            {rounds.length === 0 && <tr><td colSpan={5} className="muted">No rounds yet.</td></tr>}
+            {rounds.length === 0 && <tr><td data-label="" colSpan={5} className="muted">No rounds yet.</td></tr>}
           </tbody>
         </table>
         </div>

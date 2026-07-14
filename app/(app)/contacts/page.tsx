@@ -46,17 +46,17 @@ export default async function ContactsPage() {
                   <tbody>
                     {contacts.map((c) => (
                       <tr key={c.id}>
-                        <td style={{ fontWeight: 600 }}>{c.name}</td>
-                        <td className="muted">{coName.get(c.company_id) ?? '—'}</td>
-                        <td className="muted">{c.role ?? '—'}</td>
-                        <td>
+                        <td data-label="Name" style={{ fontWeight: 600 }}>{c.name}</td>
+                        <td data-label="Company" className="muted">{coName.get(c.company_id) ?? '—'}</td>
+                        <td data-label="Role" className="muted">{c.role ?? '—'}</td>
+                        <td data-label="LinkedIn">
                           {c.linkedin_url ? (
                             <a href={c.linkedin_url} target="_blank" rel="noreferrer">Profile ↗</a>
                           ) : (
                             <span className="faint">—</span>
                           )}
                         </td>
-                        <td className="right">
+                        <td data-label="Actions" className="right">
                           <form action={deleteContact}>
                             <input type="hidden" name="id" value={c.id} />
                             <button className="secondary sm danger" type="submit" aria-label={`Delete ${c.name}`}>

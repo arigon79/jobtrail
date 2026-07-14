@@ -37,13 +37,13 @@ export default async function ResumesPage() {
               <tbody>
                 {resumes.map((r) => (
                   <tr key={r.id}>
-                    <td style={{ fontWeight: 600 }}>
+                    <td data-label="Label" style={{ fontWeight: 600 }}>
                       {r.label}
                       {r.is_default && <span className="badge blue" style={{ marginLeft: 8 }}><span className="dot" aria-hidden="true" />general</span>}
                     </td>
-                    <td className="muted">{r.company_id ? coName.get(r.company_id) : 'General'}</td>
-                    <td className="muted">{new Date(r.uploaded_at).toLocaleDateString()}</td>
-                    <td className="right">
+                    <td data-label="Company" className="muted">{r.company_id ? coName.get(r.company_id) : 'General'}</td>
+                    <td data-label="Uploaded" className="muted">{new Date(r.uploaded_at).toLocaleDateString()}</td>
+                    <td data-label="Actions" className="right">
                       <div className="inline-actions">
                         <a className="btn secondary sm" href={`/resumes/${r.id}/download`} target="_blank" rel="noreferrer">
                           Download

@@ -87,9 +87,9 @@ export default async function Dashboard() {
                 <tbody>
                   {deadlineSoon.map((j) => (
                     <tr key={j.id}>
-                      <td style={{ fontWeight: 600 }}><Link href={`/jobs/${j.id}`}>{j.role}</Link></td>
-                      <td><StatusBadge status={j.status} /></td>
-                      <td className="right muted">due {j.deadline}</td>
+                      <td data-label="Role" style={{ fontWeight: 600 }}><Link href={`/jobs/${j.id}`}>{j.role}</Link></td>
+                      <td data-label="Status"><StatusBadge status={j.status} /></td>
+                      <td data-label="Deadline" className="right muted">due {j.deadline}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -108,9 +108,9 @@ export default async function Dashboard() {
                 <tbody>
                   {followUpDue.map((j) => (
                     <tr key={j.id}>
-                      <td style={{ fontWeight: 600 }}><Link href={`/jobs/${j.id}`}>{j.role}</Link></td>
-                      <td><StatusBadge status={j.status} /></td>
-                      <td className="right muted">follow up {j.follow_up_at}</td>
+                      <td data-label="Role" style={{ fontWeight: 600 }}><Link href={`/jobs/${j.id}`}>{j.role}</Link></td>
+                      <td data-label="Status"><StatusBadge status={j.status} /></td>
+                      <td data-label="Follow-up" className="right muted">follow up {j.follow_up_at}</td>
                     </tr>
                   ))}
                 </tbody>

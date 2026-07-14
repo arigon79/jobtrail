@@ -88,10 +88,10 @@ export default async function JobsPage({ searchParams }: { searchParams: Promise
               <tbody>
                 {list.map((j) => (
                   <tr key={j.id}>
-                    <td style={{ fontWeight: 600 }}><Link href={`/jobs/${j.id}`}>{j.role}</Link></td>
-                    <td className="muted">{j.company_id ? coName.get(j.company_id) : '—'}</td>
-                    <td><PriorityBadge priority={j.priority} /></td>
-                    <td>
+                    <td data-label="Role" style={{ fontWeight: 600 }}><Link href={`/jobs/${j.id}`}>{j.role}</Link></td>
+                    <td data-label="Company" className="muted">{j.company_id ? coName.get(j.company_id) : '—'}</td>
+                    <td data-label="Priority"><PriorityBadge priority={j.priority} /></td>
+                    <td data-label="Status">
                       <form action={updateJobStatus} className="inline-actions" style={{ justifyContent: 'flex-start', gap: 6 }}>
                         <input type="hidden" name="id" value={j.id} />
                         <select name="status" defaultValue={j.status} aria-label={`Status for ${j.role}`} style={{ width: 'auto' }}>
@@ -100,8 +100,8 @@ export default async function JobsPage({ searchParams }: { searchParams: Promise
                         <button className="secondary sm" type="submit">Save</button>
                       </form>
                     </td>
-                    <td className="muted">{j.deadline ?? '—'}</td>
-                    <td className="right">
+                    <td data-label="Deadline" className="muted">{j.deadline ?? '—'}</td>
+                    <td data-label="Actions" className="right">
                       <form action={deleteJob}>
                         <input type="hidden" name="id" value={j.id} />
                         <button className="secondary sm danger" type="submit" aria-label={`Delete ${j.role}`}>Delete</button>

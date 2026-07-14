@@ -6,14 +6,16 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     <>
       <nav className="nav" aria-label="Primary">
         <span className="brand">Job Tracker</span>
-        <NavLink href="/">Dashboard</NavLink>
-        <NavLink href="/jobs">Jobs</NavLink>
-        <NavLink href="/companies">Companies</NavLink>
-        <NavLink href="/contacts">Contacts</NavLink>
-        <NavLink href="/referrals">Referrals</NavLink>
-        <NavLink href="/resumes">Resumes</NavLink>
+        <div className="nav-links">
+          <NavLink href="/">Dashboard</NavLink>
+          <NavLink href="/jobs">Jobs</NavLink>
+          <NavLink href="/companies">Companies</NavLink>
+          <NavLink href="/contacts">Contacts</NavLink>
+          <NavLink href="/referrals">Referrals</NavLink>
+          <NavLink href="/resumes">Resumes</NavLink>
+        </div>
         <span className="spacer" />
-        <form action={signOut}>
+        <form action={signOut} className="nav-actions">
           <button className="secondary sm" type="submit">Sign out</button>
         </form>
       </nav>
